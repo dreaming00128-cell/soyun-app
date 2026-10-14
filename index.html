@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>소윤 — 우리 둘의 대화</title>
+<style>html,body{margin:0;height:100%;background:#1f1a24;color:#f3e9f5;font:16px system-ui,sans-serif;display:flex;align-items:center;justify-content:center}#m{text-align:center;padding:24px;line-height:1.6}button{margin-top:12px;padding:10px 18px;border:0;border-radius:10px;font:inherit}</style>
+</head>
+<body><div id="m">소윤을 불러오는 중…</div>
+<script>
+(function () {
+  var EXEC = "https://script.google.com/macros/s/AKfycbzIWipq5V2feC5yvvOzzWBgIglyo7Fq8-jhjXnIkMkc9Z6o8vkyp-UBqbcLzIaXOQ0Pqw/exec";
+  function call(method, args, ok, fail) {
+    fetch(EXEC, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ method: method, args: args }) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j.ok) throw new Error(j.error || "서버 오류");
+        if (ok) ok(j.result);
+      })
+      .catch(function (e) { if (fail) fail(e); else console.error(e); });
+  }
+  function build(ok, fail) {
+    return new Proxy({}, { get: function (_, k) {
+      if (k === "withSuccessHandler") return function (f) { return build(f, fail); };
+      if (k === "withFailureHandler") return function (f) { return build(ok, f); };
+      return function () { call(String(k), Array.prototype.slice.call(arguments), ok, fail); };
+    } });
+  }
+  window.google = { script: { run: build() } };
+  fetch(EXEC + "?raw=1")
+    .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+    .then(function (html) { document.open(); document.write(html); document.close(); })
+    .catch(function () {
+      document.getElementById("m").innerHTML = "불러오지 못했어요. 인터넷 연결을 확인해 주세요.<br><button onclick='location.reload()'>다시 시도</button>";
+    });
+})();
+</script>
+</body>
+</html>
